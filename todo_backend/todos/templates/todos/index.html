@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7fa;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .todo-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .todo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .todo-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .todo-item button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .todo-item button:hover {
+            background-color: #e60000;
+        }
+        .todo-form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .todo-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .todo-form button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .todo-form button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Todo App</h1>
+
+    <div class="todo-container">
+        <div>
+            <button onclick="loadTodos()">Load Todos</button>
+        </div>
+        
+        <div class="todo-form">
+            <input type="text" id="new-todo" placeholder="Enter a new task" />
+            <button onclick="createTodo()">Add Todo</button>
+        </div>
+
+        <ul class="todo-list" id="todo-list">
+            <!-- Todo items will be listed here -->
+        </ul>
+    </div>
+
+    <script>
+        // Function to load todos for the current user (using the session-based user_identifier)
+        function loadTodos() {
+            // Fetch todos for the current session (no need to provide user_identifier)
+            fetch('/api/todos/')
+                .then(response => response.json())
+                .then(data => {
+                    const todoList = document.getElementById('todo-list');
+                    todoList.innerHTML = '';  // Clear the list before rendering new items
+
+                    // Iterate through each todo and display it in the list
+                    data.forEach(todo => {
+                        const todoItem = document.createElement('li');
+                        todoItem.classList.add('todo-item');
+                        todoItem.innerHTML = `
+                            <span>${todo.title}</span>
+                            <button onclick="deleteTodo(${todo.id})">Delete</button>
+                        `;
+                        todoList.appendChild(todoItem);
+                    });
+                })
+                .catch(error => console.error('Error loading todos:', error));
+        }
+
+        // Function to create a new todo (no need to provide user_identifier)
+        function createTodo() {
+            const title = document.getElementById('new-todo').value;
+            if (!title) {
+                alert('Please provide a title for the todo');
+                return;
+            }
+
+            // POST request to create a new todo (no need for user_identifier)
+            fetch('/api/todos/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: title
+                    // The user_identifier is handled automatically by the backend (session-based)
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('new-todo').value = '';  // Clear input field after creation
+                loadTodos();  // Reload the todos list after adding a new todo
+            })
+            .catch(error => console.error('Error creating todo:', error));
+        }
+
+        // Function to delete a todo
+        function deleteTodo(todoId) {
+            // DELETE request to remove the todo with the specified ID
+            fetch(`/api/todos/${todoId}/`, {
+                method: 'DELETE',
+            })
+            .then(() => loadTodos())  // Reload the list after deletion
+            .catch(error => console.error('Error deleting todo:', error));
+        }
+    </script>
+
+</body>
+</html>
